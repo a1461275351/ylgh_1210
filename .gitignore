@@ -1,0 +1,14 @@
+# 依赖(用 npm install 重建,不随项目拷贝)
+node_modules/
+
+# 运行时数据库(SQLite,原型数据)
+server/data/
+
+# 日志与临时
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+
+# 本地工具/IDE 配置
+.claude/

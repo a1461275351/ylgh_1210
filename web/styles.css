@@ -1,0 +1,54 @@
+:root {
+  --el-color-primary: #1ab394;
+  --sidebar-bg: #2e3b52;
+  --sidebar-head: #33a3f4;
+}
+* { box-sizing: border-box; }
+html, body, #app { height: 100%; margin: 0; font-family: "Microsoft YaHei", "PingFang SC", sans-serif; }
+
+.layout { height: 100%; }
+
+/* 左侧菜单 */
+.sidebar { background: var(--sidebar-bg); transition: width .2s; overflow-x: hidden; }
+.sidebar .logo {
+  height: 48px; line-height: 48px; text-align: center; color: #fff;
+  font-size: 16px; font-weight: 600; background: var(--sidebar-head); white-space: nowrap;
+}
+.sidebar .el-menu { border-right: none; }
+.sidebar .el-menu-item.is-active { background: var(--el-color-primary) !important; color: #fff !important; }
+.sidebar .el-menu-item:hover { background: #26324a; }
+
+/* 顶栏 */
+.topbar {
+  display: flex; align-items: center; background: #fff;
+  border-bottom: 1px solid #e6e6e6; padding: 0 16px;
+}
+.collapse-btn { cursor: pointer; font-size: 18px; margin-right: 12px; }
+.sys-name {
+  background: var(--el-color-primary); color: #fff; padding: 4px 14px;
+  border-radius: 3px; font-size: 13px;
+}
+.topbar-right { margin-left: auto; font-size: 13px; color: #666; }
+
+/* 页签栏 */
+.tabs-bar { background: #fff; padding: 4px 8px 0; border-bottom: 1px solid #e6e6e6; }
+.tabs-bar .el-tabs__header { margin: 0; }
+.tabs-bar .el-tabs--card > .el-tabs__header .el-tabs__item { height: 32px; line-height: 32px; font-size: 12px; }
+
+/* 内容区 */
+.content { background: #f0f2f5; padding: 12px; overflow: auto; }
+.page-card { background: #fff; border-radius: 4px; padding: 14px; }
+
+/* 查询条件区(左侧绿色竖条,仿参考截图) */
+.query-bar { border-left: 3px solid var(--el-color-primary); padding-left: 12px; margin-bottom: 12px; }
+.query-bar .el-form-item { margin-bottom: 8px; margin-right: 18px; }
+.query-bar .el-form-item__label { font-size: 13px; }
+
+/* 表格工具行 */
+.table-toolbar { display: flex; justify-content: flex-start; gap: 8px; margin-bottom: 10px; }
+.pager { display: flex; justify-content: flex-start; margin-top: 12px; }
+
+.el-table { font-size: 12px; }
+.el-table th.el-table__cell { background: #f5f7fa !important; color: #333; }
+
+.el-table .diff-row td { background: #fef0f0 !important; }
