@@ -1,11 +1,14 @@
 // 全局布局:左侧菜单树 + 顶部多页签 + 页面注册器
 (function () {
-  // ---- 全局 API 封装 ----
+  // ---- 全局 API 封装(自动附带登录令牌)----
   window.api = async function (method, url, data) {
     const opt = { method, headers: { 'Content-Type': 'application/json' } };
+    const token = localStorage.getItem('ccs_token');
+    if (token) opt.headers['Authorization'] = 'Bearer ' + token;
     if (data !== undefined) opt.body = JSON.stringify(data);
     const resp = await fetch(url, opt);
     const json = await resp.json();
+    if (json.code === 401) { localStorage.removeItem('ccs_token'); location.reload(); throw new Error('未登录'); }
     if (json.code !== 0) {
       ElementPlus.ElMessage.error(json.message || '请求失败');
       throw new Error(json.message);
@@ -55,6 +58,9 @@
         collapsed: false,
         tabs: [],
         active: '',
+        authUser: null,           // 已登录用户
+        booting: true,            // 启动校验中
+        login: { username: 'admin', password: '', loading: false },
       };
     },
     computed: {
@@ -83,12 +89,59 @@
           this.active = next ? next.key : '';
         }
       },
+      async doLogin() {
+        if (!this.login.username || !this.login.password) return ElementPlus.ElMessage.warning('请输入用户名和密码');
+        this.login.loading = true;
+        try {
+          const resp = await fetch('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: this.login.username, password: this.login.password }) });
+          const json = await resp.json();
+          if (json.code !== 0) return ElementPlus.ElMessage.error(json.message || '登录失败');
+          localStorage.setItem('ccs_token', json.data.token);
+          this.authUser = json.data.user;
+          ElementPlus.ElMessage.success('欢迎,' + json.data.user.real_name);
+          this.openPage({ key: 'stat', title: '业务统计' });
+        } finally { this.login.loading = false; }
+      },
+      logout() {
+        localStorage.removeItem('ccs_token');
+        this.authUser = null; this.tabs = []; this.active = '';
+      },
+      roleText() { return (this.authUser.roles || []).map(r => r.role_name).join('、') || '—'; },
     },
-    mounted() {
-      this.openPage({ key: 'customer', title: '客户档案' });
+    async mounted() {
+      const token = localStorage.getItem('ccs_token');
+      if (token) {
+        try {
+          const resp = await fetch('/api/auth/me', { headers: { Authorization: 'Bearer ' + token } });
+          const json = await resp.json();
+          if (json.code === 0) { this.authUser = json.data; this.openPage({ key: 'stat', title: '业务统计' }); }
+          else localStorage.removeItem('ccs_token');
+        } catch (e) { /* ignore */ }
+      }
+      this.booting = false;
     },
     template: `
-<el-container class="layout">
+<div v-if="booting" style="height:100vh;display:flex;align-items:center;justify-content:center;color:#888">加载中...</div>
+
+<div v-else-if="!authUser" class="login-wrap">
+  <div class="login-card">
+    <div class="login-title">1210 保税跨境电商关务管理系统</div>
+    <div class="login-sub">综合服务平台 · 登录</div>
+    <el-form @submit.prevent="doLogin" style="margin-top:20px">
+      <el-form-item>
+        <el-input v-model="login.username" size="large" placeholder="用户名" :prefix-icon="'User'"/>
+      </el-form-item>
+      <el-form-item>
+        <el-input v-model="login.password" size="large" type="password" show-password placeholder="密码" :prefix-icon="'Lock'" @keyup.enter="doLogin"/>
+      </el-form-item>
+      <el-button type="primary" size="large" style="width:100%" :loading="login.loading" @click="doLogin">登 录</el-button>
+    </el-form>
+    <div class="login-tip">初始账号:admin / admin123</div>
+  </div>
+</div>
+
+<el-container v-else class="layout">
   <el-aside :width="collapsed ? '64px' : '220px'" class="sidebar">
     <div class="logo">{{ collapsed ? '1210' : '1210 综合服务平台' }}</div>
     <el-menu :collapse="collapsed" :collapse-transition="false" background-color="#2e3b52"
@@ -107,7 +160,10 @@
         <Fold v-if="!collapsed"/><Expand v-else/>
       </el-icon>
       <span class="sys-name">关务管理系统</span>
-      <div class="topbar-right">登录用户:管理员 ┃ 西安市航空基地协航供应链管理有限公司</div>
+      <div class="topbar-right">
+        <span>{{ authUser.real_name }}({{ roleText() }})┃ 西安市航空基地协航供应链管理有限公司</span>
+        <el-button link type="primary" style="margin-left:12px" @click="logout">退出</el-button>
+      </div>
     </el-header>
     <div class="tabs-bar" v-if="tabs.length">
       <el-tabs v-model="active" type="card" closable @tab-remove="closeTab">

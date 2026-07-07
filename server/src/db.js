@@ -651,6 +651,54 @@ CREATE TABLE IF NOT EXISTS stocktake (
 );
 `);
 
+// ---------- T18 系统管理:用户 / 角色 / 授权 ----------
+db.exec(`
+CREATE TABLE IF NOT EXISTS sys_user (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  username      TEXT NOT NULL UNIQUE,
+  password_hash TEXT NOT NULL,
+  real_name     TEXT NOT NULL,
+  mobile        TEXT,
+  email         TEXT,
+  status        TEXT NOT NULL DEFAULT 'ENABLED',  -- ENABLED/DISABLED
+  created_at    TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+  updated_at    TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+);
+CREATE TABLE IF NOT EXISTS sys_role (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  role_code TEXT NOT NULL UNIQUE,
+  role_name TEXT NOT NULL,
+  remark    TEXT
+);
+CREATE TABLE IF NOT EXISTS sys_user_role (
+  user_id INTEGER NOT NULL,
+  role_id INTEGER NOT NULL,
+  PRIMARY KEY (user_id, role_id)
+);
+CREATE TABLE IF NOT EXISTS sys_role_menu (
+  role_id   INTEGER NOT NULL,
+  menu_code TEXT NOT NULL,
+  PRIMARY KEY (role_id, menu_code)
+);
+`);
+
+// 角色种子
+if (db.prepare(`SELECT COUNT(*) c FROM sys_role`).get().c === 0) {
+  const insR = db.prepare(`INSERT INTO sys_role (role_code, role_name) VALUES (?,?)`);
+  [['ADMIN','系统管理员'],['ENTRY','关务录入员'],['AUDIT1','关务初审员'],['AUDIT2','关务复审员'],
+   ['FINANCE','财务'],['CUSTOMER','客户用户'],['WAREHOUSE','仓库操作员']].forEach(r => insR.run(r[0], r[1]));
+}
+// 管理员种子(admin / admin123)
+if (db.prepare(`SELECT COUNT(*) c FROM sys_user`).get().c === 0) {
+  const crypto = require('crypto');
+  const salt = crypto.randomBytes(8).toString('hex');
+  const hash = crypto.scryptSync('admin123', salt, 32).toString('hex');
+  const r = db.prepare(`INSERT INTO sys_user (username, password_hash, real_name) VALUES (?,?,?)`)
+    .run('admin', `${salt}:${hash}`, '系统管理员');
+  const adminRole = db.prepare(`SELECT id FROM sys_role WHERE role_code='ADMIN'`).get();
+  db.prepare(`INSERT INTO sys_user_role (user_id, role_id) VALUES (?,?)`).run(Number(r.lastInsertRowid), adminRole.id);
+}
+
 // ---------- 种子数据 ----------
 const seedParam = db.prepare(
   `INSERT OR IGNORE INTO sys_param (param_key, param_value, param_desc) VALUES (?, ?, ?)`);

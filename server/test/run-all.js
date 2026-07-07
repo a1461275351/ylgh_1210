@@ -23,6 +23,7 @@ const SUITES = [
   ['1210进口闭环',    'import-flow.test.js'],
   ['税费+退货',       'finance-refund.test.js'],
   ['WMS+报核',        'wms-verify.test.js'],
+  ['统计+系统管理',    'stat-admin.test.js'],
 ];
 
 const C = { g: '\x1b[32m', r: '\x1b[31m', y: '\x1b[33m', b: '\x1b[36m', d: '\x1b[90m', x: '\x1b[0m', bold: '\x1b[1m' };

@@ -4,6 +4,9 @@ const path = require('path');
 
 const app = express();
 app.use(express.json({ limit: '10mb' }));
+const auth = require('./auth');
+app.use(auth.attachUser);   // 软鉴权:解析令牌挂 req.user(审计用)
+app.use(auth.requireAuth);  // 强鉴权:仅 AUTH_ENFORCE=1 时生效
 
 // 前端静态库(本地依赖,免 CDN)
 const nm = path.join(__dirname, '..', 'node_modules');
@@ -59,6 +62,9 @@ app.use('/api/tax', require('./routes/tax'));
 app.use('/api/refund', require('./routes/refund'));
 app.use('/api/wms', require('./routes/wms'));
 app.use('/api/verify', require('./routes/verify'));
+app.use('/api/stat', require('./routes/stat'));
+app.use('/api/auth', require('./routes/auth'));
+app.use('/api/sys', require('./routes/sysadmin'));
 app.use('/api/hstax', require('./routes/hstax'));
 app.use('/api/orders', require('./routes/orders'));
 app.use('/api/channels', require('./routes/channels'));
