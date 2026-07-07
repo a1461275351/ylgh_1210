@@ -67,6 +67,12 @@ CREATE TABLE sys_op_log (
   KEY idx_created (created_at)
 ) COMMENT='操作日志(审计留痕)';
 
+CREATE TABLE sys_seq (
+  seq_key VARCHAR(30) NOT NULL COMMENT '单号序列键,如 DD(订单)/YL(预录入)/HZ(核注)/HF(核放)',
+  seq_val BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT '当前流水值',
+  PRIMARY KEY (seq_key)
+) COMMENT='单据编号流水序列';
+
 CREATE TABLE sys_param (
   id          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   param_key   VARCHAR(50)  NOT NULL COMMENT '参数键:LIMIT_SINGLE(单次限值5000)/LIMIT_ANNUAL(年度26000)/TAX_DISCOUNT(0.7)/REFUND_DAYS(30)/EMS_EXPIRE_WARN_DAYS(60)...',
